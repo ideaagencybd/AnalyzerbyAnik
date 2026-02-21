@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Data Analyzer · by Anik</title>
+    <!-- SheetJS for Excel/CSV -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <!-- jsPDF + autoTable for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e2eaf2 100%);
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            color: #0b1e33;
+        }
+        .container { max-width: 1800px; margin: 0 auto; }
+
+        .glass-card {
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -8px rgba(0,20,45,0.15);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(140deg, #0f2b4f, #1d4ed8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 i {
+            background: rgba(29,78,216,0.2);
+            padding: 12px;
+            border-radius: 50%;
+            color: #1d4ed8;
+            font-size: 2rem;
+            -webkit-text-fill-color: #1d4ed8;
+        }
+        .subtitle {
+            color: #2c3e5c;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-panel {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 3rem;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 15px 30px -12px rgba(0,30,60,0.2);
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .btn-primary {
+            background: linear-gradient(145deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 0.9rem 2.2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: 0 8px 18px -6px #1e3a8a70;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 18px 25px -8px #1e3a8a; }
+        .google-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 0.9rem 1.8rem;
+            border: 1px solid #d9e2ef;
+            border-radius: 60px;
+            background: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            outline: none;
+        }
+        .google-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px #2563eb20; }
+        .info-badge {
+            background: #e6f0ff;
+            border-radius: 40px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .warning-badge {
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 40px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-section {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 140px;
+        }
+        .filter-group label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #2c3e5a;
+            margin-bottom: 0.25rem;
+        }
+        .filter-group select, .filter-group input {
+            background: white;
+            border: 1px solid #dde3ed;
+            border-radius: 40px;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .filter-input {
+            flex: 2;
+            min-width: 260px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 56px;
+            padding: 16px 28px;
+            font-size: 1rem;
+        }
+        .filter-badge {
+            background: #2563eb20;
+            border: 1px solid #2563eb60;
+            color: #1e4b9e;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .reset-btn {
+            background: none;
+            border: 1px dashed #64748b;
+            color: #1e293b;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .reset-btn:hover { background: #ffffff80; border: 1px solid #2563eb; color: #2563eb; }
+
+        .column-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            align-items: center;
+        }
+        .column-filter {
+            background: white;
+            border-radius: 40px;
+            padding: 0.3rem 1rem 0.3rem 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid #d0e0f0;
+            font-size: 0.85rem;
+        }
+        .column-filter select {
+            border: none;
+            background: transparent;
+            font-weight: 500;
+            padding: 0.3rem 1.5rem 0.3rem 0.5rem;
+            outline: none;
+        }
+        .clear-col-filter {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0 4px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .kpi-card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.5rem 1.2rem;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .kpi-title { font-size: 0.8rem; text-transform: uppercase; color: #476788; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 5px; }
+        .kpi-value { font-size: 2.2rem; font-weight: 700; color: #0c2d4f; }
+
+        .column-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+            gap: 26px;
+            margin: 2rem 0;
+        }
+        .column-card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 2px dashed #cfdff5;
+            padding-bottom: 0.5rem;
+        }
+        .column-name { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+        .column-type {
+            background: #d4e2fc;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1d4ed8;
+        }
+        .stats-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+            margin-bottom: 1rem;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            border-bottom: 1px dotted #d9e2ef;
+        }
+        .stat-label { color: #526e8c; }
+        .stat-value { font-weight: 700; color: #0b2f4f; }
+        .chart-container { height: 180px; margin-top: 1rem; }
+
+        .correlation-table {
+            background: rgba(255,255,255,0.5);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+        .correlation-table table { border-collapse: collapse; width: 100%; }
+        .correlation-table th { padding: 0.8rem; color: #1e3a5f; }
+        .correlation-table td {
+            padding: 0.8rem;
+            text-align: center;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .sample-table {
+            background: rgba(255,255,255,0.5);
+            border-radius: 2rem;
+            padding: 1rem;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .sample-table table { border-collapse: collapse; width: 100%; }
+        .sample-table th { background: #e3efff; padding: 0.8rem; position: sticky; top: 0; z-index: 2; }
+        .sample-table td { padding: 0.6rem; border-bottom: 1px solid #ccddec; }
+
+        .export-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 2rem 0 1rem;
+        }
+        .btn-secondary {
+            background: white;
+            border: 1px solid #ccddec;
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            color: #0f2b4f;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.15s;
+        }
+        .btn-secondary:hover { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+        .loader { border: 4px solid #eef3fc; border-top: 4px solid #1d4ed8; border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; margin: 2rem auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .footer { text-align: center; color: #5c7a9a; margin-top: 3rem; }
+
+        /* Beautiful sheet tabs */
+        .sheet-tabs-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(29,78,216,0.2);
+        }
+        .sheet-tab {
+            background: white;
+            border: 1px solid #d0e0f0;
+            border-radius: 40px;
+            padding: 0.7rem 1.8rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 4px 8px -4px rgba(0,0,0,0.05);
+        }
+        .sheet-tab i {
+            color: #1d4ed8;
+            font-size: 1rem;
+        }
+        .sheet-tab.active {
+            background: #1d4ed8;
+            color: white;
+            border-color: #1d4ed8;
+            box-shadow: 0 8px 14px -6px #1d4ed8aa;
+        }
+        .sheet-tab.active i {
+            color: white;
+        }
+        .sheet-tab:hover {
+            background: #e6f0ff;
+            border-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1><i class="fas fa-brain"></i> Professional Data Analyzer by Anik</h1>
+    <div class="subtitle">
+        <i class="fas fa-cloud-upload-alt"></i> Upload Excel/CSV or paste a Google Sheets link – all sheets combined
+        <span class="info-badge"><i class="fas fa-chart-line"></i> overall + per‑sheet filtering</span>
+    </div>
+
+    <!-- Input panel -->
+    <div class="input-panel">
+        <div class="input-row">
+            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+            <button class="btn-primary" onclick="document.getElementById('fileInput').click()"><i class="fas fa-upload"></i> Choose File</button>
+            <span id="file-info"><i class="far fa-file"></i> no file selected</span>
+        </div>
+        <div class="input-row">
+            <input type="text" id="googleSheetUrl" class="google-input" placeholder="Google Sheets URL (must be 'Anyone with the link can view')">
+            <button class="btn-primary" id="loadGsheetBtn"><i class="fab fa-google"></i> Load Sheets</button>
+            <span id="gsheet-info"></span>
+        </div>
+        <div class="input-row" style="font-size:0.85rem; color:#4b5563;">
+            <i class="fas fa-info-circle"></i> For Google Sheets, ensure sharing is set to "Anyone with the link can view". If full workbook fails, first sheet is loaded.
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader hidden"></div>
+
+    <!-- Dashboard (hidden until data loaded) -->
+    <div id="dashboard" class="hidden">
+        <!-- Filter section -->
+        <div class="filter-section">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label><i class="fas fa-file-alt"></i> Sheet</label>
+                    <select id="sheetFilter"><option value="All">All Sheets</option></select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-search"></i> Global Search</label>
+                    <input type="text" id="globalFilter" class="filter-input" placeholder="Search across all columns...">
+                </div>
+                <button class="btn-secondary" id="applyFilter"><i class="fas fa-filter"></i> Apply Filters</button>
+                <button class="reset-btn" id="clearAllFilters"><i class="fas fa-undo-alt"></i> Reset All</button>
+                <div class="filter-badge" id="filterStatsBadge">
+                    <i class="fas fa-filter"></i> <span id="filteredCount">0</span> rows
+                </div>
+            </div>
+
+            <!-- Dynamic column filters will be inserted here -->
+            <div id="columnFiltersContainer" class="column-filters"></div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="kpi-grid" id="kpiCards"></div>
+
+        <!-- Export buttons -->
+        <div class="export-group">
+            <button class="btn-secondary" id="exportCsv"><i class="fas fa-file-csv"></i> Summary CSV</button>
+            <button class="btn-secondary" id="exportExcel"><i class="fas fa-file-excel"></i> Excel Report</button>
+            <button class="btn-secondary" id="exportPdf"><i class="fas fa-file-pdf"></i> PDF Report</button>
+        </div>
+
+        <!-- Column analysis -->
+        <h2 style="margin: 2rem 0 1rem; font-size: 1.8rem;"><i class="fas fa-cube"></i> Column Deep Dive (Overall)</h2>
+        <div id="columnGrid" class="column-grid"></div>
+
+        <!-- Correlation matrix -->
+        <div id="correlationSection" class="hidden">
+            <h2 style="margin: 2rem 0 1rem;"><i class="fas fa-heat-map"></i> Correlation Matrix</h2>
+            <div id="correlationTable" class="correlation-table"></div>
+            <div id="topCorrelations" style="margin-top:1.5rem; padding:1rem; background:rgba(255,255,255,0.5); border-radius:2rem;"></div>
+        </div>
+
+        <!-- Data sample (filtered) -->
+        <h2 style="margin: 2rem 0 1rem;"><i class="fas fa-table"></i> Filtered Data Sample (first 20 rows)</h2>
+        <div id="sampleTable" class="sample-table"></div>
+
+        <!-- Raw data per sheet (tabs) - beautifully styled -->
+        <h2 style="margin: 2.5rem 0 1rem;"><i class="fas fa-layer-group"></i> Raw Data by Sheet</h2>
+        <div class="sheet-tabs-container" id="sheetTabs"></div>
+        <div id="sheetDataContainer" class="sample-table" style="margin-top:0.5rem;">
+            <p style="padding:20px; color:#64748b;">Select a sheet to view its raw data.</p>
+        </div>
+    </div>
+
+    <div class="footer"><i class="fas fa-bolt"></i> Whole‑file analysis · Outlier detection · Skew/Kurtosis · Per‑sheet raw view</div>
+</div>
+
+<script>
+(function() {
+    // ---------- State ----------
+    let allData = [];                // combined rows from all sheets (each has _sheet property)
+    let sheetsRawData = {};          // sheet name -> array of arrays (raw rows)
+    let unionHeaders = [];            // all unique column names across sheets
+    let filteredData = [];            // after applying filters
+
+    let columnStats = {};
+    let numericCols = [], categoricalCols = [], dateCols = [];
+    let chartInstances = [];
+
+    // Active filters: sheet, global search, and column-specific values
+    let activeFilters = {
+        sheet: 'All',
+        global: '',
+        columns: {}  // column name -> selected value (or null for no filter)
+    };
+
+    // Minimum number of non-empty columns required to consider a row valid (excluding _sheet)
+    const MIN_NON_EMPTY = 2;
+
+    // ---------- Eye‑soothing color palette ----------
+    const SOFT_PALETTE = [
+        '#4E79A7', '#F28E2B', '#E15759', '#76B7B2', '#59A14F',
+        '#EDC949', '#AF7AA1', '#FF9DA7', '#9C755F', '#BAB0AC',
+        '#86BCB6', '#F1CE63', '#D37295', '#A0CBE8', '#FFBE7D',
+        '#8CD17D', '#B07AA1', '#F1CE63', '#499894', '#E4572E'
+    ];
+
+    // DOM elements
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('file-info');
+    const gsheetUrl = document.getElementById('googleSheetUrl');
+    const loadGsheetBtn = document.getElementById('loadGsheetBtn');
+    const gsheetInfo = document.getElementById('gsheet-info');
+    const loader = document.getElementById('loader');
+    const dashboard = document.getElementById('dashboard');
+    const sheetFilter = document.getElementById('sheetFilter');
+    const globalFilter = document.getElementById('globalFilter');
+    const applyFilter = document.getElementById('applyFilter');
+    const clearAllFiltersBtn = document.getElementById('clearAllFilters');
+    const filteredCountSpan = document.getElementById('filteredCount');
+    const sheetTabs = document.getElementById('sheetTabs');
+    const sheetDataContainer = document.getElementById('sheetDataContainer');
+    const columnFiltersContainer = document.getElementById('columnFiltersContainer');
+
+    // ---------- CORS Proxies for Google Sheets ----------
+    const PROXIES = [
+        'https://corsproxy.io/?',
+        'https://api.allorigins.win/raw?url='
+    ];
+
+    async function fetchWithProxy(url, proxyIndex = 0) {
+        if (proxyIndex >= PROXIES.length) throw new Error('All proxies failed');
+        const proxyUrl = PROXIES[proxyIndex] + encodeURIComponent(url);
+        try {
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res;
+        } catch (err) {
+            console.warn(`Proxy ${proxyIndex} failed:`, err);
+            return fetchWithProxy(url, proxyIndex + 1);
+        }
+    }
+
+    // ---------- Google Sheets Loader ----------
+    window.loadGoogleSheet = async function() {
+        const url = gsheetUrl.value.trim();
+        if (!url) return alert('Please enter a Google Sheets URL');
+        gsheetInfo.innerHTML = '<span class="loader" style="width:20px; height:20px;"></span> loading...';
+        loader.classList.remove('hidden');
+        dashboard.classList.add('hidden');
+
+        const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (!match) {
+            gsheetInfo.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Invalid URL';
+            loader.classList.add('hidden');
+            return;
+        }
+        const sheetId = match[1];
+        const xlsxUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx`;
+
+        try {
+            const response = await fetchWithProxy(xlsxUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const data = new Uint8Array(arrayBuffer);
+            const wb = XLSX.read(data, { type: 'array' });
+            gsheetInfo.innerHTML = '<i class="fas fa-check-circle" style="color:#22c55e;"></i> all sheets loaded';
+            processWorkbook(wb);
+        } catch (error) {
+            console.warn('XLSX failed, falling back to CSV first sheet', error);
+            // Fallback to CSV first sheet
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+            try {
+                const response = await fetchWithProxy(csvUrl);
+                const csvText = await response.text();
+                const wb = XLSX.read(csvText, { type: 'string' });
+                gsheetInfo.innerHTML = '<span class="warning-badge"><i class="fas fa-exclamation-triangle"></i> loaded first sheet only (full XLSX failed)</span>';
+                processWorkbook(wb);
+            } catch (e) {
+                gsheetInfo.innerHTML = '<i class="fas fa-exclamation-triangle"></i> failed to load';
+                loader.classList.add('hidden');
+            }
+        }
+    };
+
+    // ---------- Process uploaded file ----------
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        fileInfo.innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> ${file.name}`;
+        loader.classList.remove('hidden');
+        dashboard.classList.add('hidden');
+        const reader = new FileReader();
+        reader.onload = (le) => {
+            const data = new Uint8Array(le.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            processWorkbook(wb);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // ---------- Process workbook: combine all sheets ----------
+    function processWorkbook(wb) {
+        allData = [];
+        sheetsRawData = {};
+        const allHeadersSet = new Set();
+
+        // First pass: collect all unique headers
+        wb.SheetNames.forEach(sheetName => {
+            const sheet = wb.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            if (rows.length < 2) return;
+            const headerRow = rows[0].map(h => h ? h.toString().trim() : '');
+            headerRow.forEach(h => { if (h) allHeadersSet.add(h); });
+        });
+        unionHeaders = Array.from(allHeadersSet).sort();
+
+        // Second pass: build allData and store raw rows
+        wb.SheetNames.forEach(sheetName => {
+            const sheet = wb.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+            if (rows.length < 2) return;
+            const headerRow = rows[0].map(h => h ? h.toString().trim() : '');
+
+            // Store raw rows for display (first 1000 rows)
+            sheetsRawData[sheetName] = rows.slice(0, 1000);
+
+            // Build objects for each data row
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i] || [];
+                // Count non-empty cells in this row (among the original headers)
+                const nonEmptyCount = headerRow.reduce((cnt, h, idx) => {
+                    return cnt + (row[idx] !== undefined && row[idx] !== null && row[idx].toString().trim() !== '' ? 1 : 0);
+                }, 0);
+                // Skip if fewer than MIN_NON_EMPTY non-empty cells
+                if (nonEmptyCount < MIN_NON_EMPTY) continue;
+
+                const obj = { _sheet: sheetName };
+                // Populate union headers with values from this row (if column exists)
+                unionHeaders.forEach(h => {
+                    const colIndex = headerRow.indexOf(h);
+                    obj[h] = (colIndex !== -1 && row[colIndex] !== undefined) ? row[colIndex] : '';
+                });
+                allData.push(obj);
+            }
+        });
+
+        // Populate sheet filter dropdown
+        sheetFilter.innerHTML = '<option value="All">All Sheets</option>';
+        Object.keys(sheetsRawData).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            sheetFilter.appendChild(opt);
+        });
+
+        // Reset filters
+        activeFilters = { sheet: 'All', global: '', columns: {} };
+        globalFilter.value = '';
+        sheetFilter.value = 'All';
+
+        // Initial filtered data = all
+        filteredData = [...allData];
+        filteredCountSpan.textContent = filteredData.length;
+
+        // Render sheet tabs for raw data
+        renderSheetTabs();
+
+        // Analyze and render dashboard
+        analyzeData();
+        renderColumnFilters(); // Build dynamic column filters based on categorical columns
+        renderDashboard();
+
+        loader.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+    }
+
+    // ---------- Render dynamic column filters for categorical columns ----------
+    function renderColumnFilters() {
+        columnFiltersContainer.innerHTML = '';
+        // Use categorical columns that have at most 20 unique values (to avoid huge dropdowns)
+        const filterCols = categoricalCols.filter(col => columnStats[col].unique <= 20).slice(0,8); // limit to 8 for UI space
+        filterCols.forEach(col => {
+            const values = [...new Set(allData.map(row => row[col]).filter(v => v !== null && v !== undefined && v.toString().trim() !== ''))].sort();
+            if (values.length === 0) return;
+            const filterDiv = document.createElement('div');
+            filterDiv.className = 'column-filter';
+            filterDiv.innerHTML = `
+                <span>${col}:</span>
+                <select data-col="${col}">
+                    <option value="">All</option>
+                    ${values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('')}
+                </select>
+                <button class="clear-col-filter" data-col="${col}" title="Clear filter"><i class="fas fa-times-circle"></i></button>
+            `;
+            const select = filterDiv.querySelector('select');
+            select.value = activeFilters.columns[col] || '';
+            select.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val === '') {
+                    delete activeFilters.columns[col];
+                } else {
+                    activeFilters.columns[col] = val;
+                }
+                applyFilters();
+            });
+            const clearBtn = filterDiv.querySelector('.clear-col-filter');
+            clearBtn.addEventListener('click', () => {
+                delete activeFilters.columns[col];
+                select.value = '';
+                applyFilters();
+            });
+            columnFiltersContainer.appendChild(filterDiv);
+        });
+    }
+
+    // ---------- Apply all filters ----------
+    function applyFilters() {
+        // Update activeFilters from UI
+        activeFilters.sheet = sheetFilter.value;
+        activeFilters.global = globalFilter.value.trim().toLowerCase();
+
+        filteredData = allData.filter(row => {
+            // Sheet filter
+            if (activeFilters.sheet !== 'All' && row._sheet !== activeFilters.sheet) return false;
+
+            // Global search
+            if (activeFilters.global) {
+                const match = unionHeaders.some(h => row[h] && row[h].toString().toLowerCase().includes(activeFilters.global));
+                if (!match) return false;
+            }
+
+            // Column-specific filters
+            for (let [col, val] of Object.entries(activeFilters.columns)) {
+                if (!val) continue;
+                const rowVal = row[col] ? row[col].toString().trim() : '';
+                if (rowVal !== val) return false;
+            }
+
+            return true;
+        });
+
+        filteredCountSpan.textContent = filteredData.length;
+        analyzeData();
+        renderDashboard();
+    }
+
+    // ---------- Clear all filters ----------
+    function clearAllFilters() {
+        activeFilters = { sheet: 'All', global: '', columns: {} };
+        sheetFilter.value = 'All';
+        globalFilter.value = '';
+        // Reset all column filter selects
+        document.querySelectorAll('.column-filter select').forEach(select => select.value = '');
+        applyFilters();
+    }
+
+    // ---------- Render beautiful sheet tabs for raw data ----------
+    function renderSheetTabs() {
+        sheetTabs.innerHTML = '';
+        const names = Object.keys(sheetsRawData);
+        names.forEach((name, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'sheet-tab' + (idx === 0 ? ' active' : '');
+            btn.innerHTML = `<i class="fas fa-file-excel"></i> ${name}`;
+            btn.onclick = () => showSheetData(name);
+            sheetTabs.appendChild(btn);
+        });
+        if (names.length) showSheetData(names[0]);
+    }
+
+    function showSheetData(sheetName) {
+        document.querySelectorAll('.sheet-tab').forEach(btn => btn.classList.toggle('active', btn.textContent.includes(sheetName)));
+        const rows = sheetsRawData[sheetName] || [];
+        if (!rows.length) {
+            sheetDataContainer.innerHTML = '<p>No data</p>';
+            return;
+        }
+        let html = '<table><thead><tr>';
+        rows[0].forEach(cell => html += `<th>${escapeHtml(cell)}</th>`);
+        html += '</tr></thead><tbody>';
+        for (let i=1; i<rows.length; i++) {
+            html += '<tr>';
+            rows[i].forEach(cell => html += `<td>${escapeHtml(cell)}</td>`);
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+        sheetDataContainer.innerHTML = html;
+    }
+
+    // ---------- Analyze current filtered data ----------
+    function analyzeData() {
+        columnStats = {};
+        numericCols = []; categoricalCols = []; dateCols = [];
+        unionHeaders.forEach(col => {
+            const values = filteredData.map(row => row[col]);
+            const type = detectType(values);
+            const stats = computeStats(col, values, type);
+            columnStats[col] = stats;
+            if (stats.type === 'numeric') numericCols.push(col);
+            else if (stats.type === 'categorical') categoricalCols.push(col);
+            else if (stats.type === 'date') dateCols.push(col);
+        });
+    }
+
+    // ---------- Type detection ----------
+    function detectType(values) {
+        let num = 0, date = 0, total = 0;
+        const sample = values.slice(0, 100);
+        for (let v of sample) {
+            if (v === null || v === undefined || v === '') continue;
+            const str = v.toString().trim();
+            if (!isNaN(parseFloat(str)) && isFinite(str)) { num++; total++; }
+            else if (!isNaN(Date.parse(str))) { date++; total++; }
+        }
+        if (total === 0) return 'categorical';
+        if (num / total > 0.6) return 'numeric';
+        if (date / total > 0.6) return 'date';
+        return 'categorical';
+    }
+
+    // ---------- Advanced stats ----------
+    function extraNumericStats(arr) {
+        const n = arr.length;
+        if (n < 3) return { skew: null, kurt: null };
+        const mean = arr.reduce((a,b)=>a+b,0)/n;
+        const variance = arr.reduce((acc,v) => acc + (v-mean)**2, 0)/(n-1);
+        const std = Math.sqrt(variance);
+        if (std === 0) return { skew: 0, kurt: -2 };
+        const m3 = arr.reduce((acc,v) => acc + Math.pow(v-mean,3), 0)/n;
+        const m4 = arr.reduce((acc,v) => acc + Math.pow(v-mean,4), 0)/n;
+        const skew = m3 / Math.pow(std,3);
+        const kurt = m4 / Math.pow(std,4) - 3;
+        return { skew: skew.toFixed(3), kurt: kurt.toFixed(3) };
+    }
+
+    // ---------- Outlier detection (IQR) ----------
+    function detectOutliers(nums) {
+        if (nums.length < 4) return { count: 0, pct: 0 };
+        const sorted = nums.slice().sort((a,b)=>a-b);
+        const q1 = sorted[Math.floor(sorted.length*0.25)];
+        const q3 = sorted[Math.floor(sorted.length*0.75)];
+        const iqr = q3 - q1;
+        const lower = q1 - 1.5 * iqr;
+        const upper = q3 + 1.5 * iqr;
+        const outliers = nums.filter(v => v < lower || v > upper);
+        return { count: outliers.length, pct: ((outliers.length/nums.length)*100).toFixed(1) };
+    }
+
+    // ---------- Compute stats for a column ----------
+    function computeStats(col, values, type) {
+        const nonEmpty = values.filter(v => v !== null && v !== undefined && v.toString().trim() !== '');
+        const missing = values.length - nonEmpty.length;
+        const stats = {
+            count: values.length,
+            missing, missingPct: ((missing/values.length)*100).toFixed(1),
+            unique: new Set(nonEmpty.map(v => v.toString().trim())).size
+        };
+        if (type === 'numeric') {
+            const nums = nonEmpty.map(v => parseFloat(v)).filter(v => !isNaN(v));
+            if (nums.length === 0) return { ...stats, type: 'numeric (invalid)' };
+            const sum = nums.reduce((a,b)=>a+b,0);
+            const mean = sum / nums.length;
+            const sorted = nums.slice().sort((a,b)=>a-b);
+            const median = sorted[Math.floor(sorted.length/2)];
+            const min = sorted[0], max = sorted[sorted.length-1];
+            const q1 = sorted[Math.floor(sorted.length*0.25)], q3 = sorted[Math.floor(sorted.length*0.75)];
+            const variance = nums.reduce((acc,v) => acc + (v-mean)**2, 0) / nums.length;
+            const stdDev = Math.sqrt(variance);
+            const extra = extraNumericStats(nums);
+            const outliers = detectOutliers(nums);
+            stats.type = 'numeric';
+            stats.mean = mean.toFixed(2); stats.median = median.toFixed(2); stats.min = min.toFixed(2); stats.max = max.toFixed(2);
+            stats.q1 = q1.toFixed(2); stats.q3 = q3.toFixed(2); stats.stdDev = stdDev.toFixed(2);
+            stats.skew = extra.skew; stats.kurt = extra.kurt;
+            stats.outliers = outliers.count; stats.outlierPct = outliers.pct;
+            stats.numericValues = nums;
+        } else if (type === 'date') {
+            const dates = nonEmpty.map(v => new Date(v)).filter(d => !isNaN(d));
+            if (dates.length === 0) return { ...stats, type: 'date (invalid)' };
+            const minDate = new Date(Math.min(...dates.map(d=>d)));
+            const maxDate = new Date(Math.max(...dates.map(d=>d)));
+            stats.type = 'date';
+            stats.minDate = minDate.toISOString().split('T')[0];
+            stats.maxDate = maxDate.toISOString().split('T')[0];
+            stats.rangeDays = Math.round((maxDate - minDate) / (86400000));
+        } else {
+            const freq = {};
+            nonEmpty.forEach(v => { let k = v.toString().trim(); freq[k] = (freq[k]||0)+1; });
+            const sortedFreq = Object.entries(freq).sort((a,b) => b[1]-a[1]);
+            stats.type = 'categorical';
+            stats.topValues = sortedFreq.slice(0,5).map(([val,cnt]) => ({ value: val, count: cnt, pct: ((cnt/nonEmpty.length)*100).toFixed(1) }));
+            stats.categories = sortedFreq.map(([val])=>val);
+            stats.counts = sortedFreq.map(([,cnt])=>cnt);
+        }
+        return stats;
+    }
+
+    // ---------- Render dashboard ----------
+    function renderDashboard() {
+        renderKPI();
+        renderColumnGrid();
+        renderCorrelation();
+        renderSample();
+        // Re-render column filters in case categorical columns changed (e.g., after filtering)
+        renderColumnFilters();
+    }
+
+    function renderKPI() {
+        const totalRows = filteredData.length;
+        const totalCols = unionHeaders.length;
+        let missingCells = 0;
+        unionHeaders.forEach(h => missingCells += columnStats[h].missing);
+        const completeness = totalRows * totalCols ? ((totalRows*totalCols - missingCells)/(totalRows*totalCols)*100).toFixed(1) : 0;
+        document.getElementById('kpiCards').innerHTML = `
+            <div class="kpi-card"><div class="kpi-title"><i class="fas fa-rows"></i> Rows (filled)</div><div class="kpi-value">${totalRows}</div></div>
+            <div class="kpi-card"><div class="kpi-title"><i class="fas fa-columns"></i> Columns</div><div class="kpi-value">${totalCols}</div></div>
+            <div class="kpi-card"><div class="kpi-title"><i class="fas fa-calculator"></i> Numeric</div><div class="kpi-value">${numericCols.length}</div></div>
+            <div class="kpi-card"><div class="kpi-title"><i class="fas fa-tag"></i> Categorical</div><div class="kpi-value">${categoricalCols.length}</div></div>
+            <div class="kpi-card"><div class="kpi-title"><i class="fas fa-calendar-alt"></i> Date</div><div class="kpi-value">${dateCols.length}</div></div>
+            <div class="kpi-card"><div class="kpi-title"><i class="fas fa-heart-circle-check"></i> Completeness</div><div class="kpi-value">${completeness}%</div></div>
+        `;
+    }
+
+    function renderColumnGrid() {
+        let html = '';
+        unionHeaders.forEach(col => {
+            const s = columnStats[col];
+            const safeId = col.replace(/[^a-zA-Z0-9]/g, '_');
+            html += `<div class="column-card" id="col-${safeId}">`;
+            html += `<div class="column-header"><span class="column-name"><i class="fas fa-braces"></i> ${escapeHtml(col)}</span><span class="column-type">${s.type}</span></div>`;
+            html += `<div class="stats-list">`;
+            html += `<div class="stat-item"><span class="stat-label">count</span><span class="stat-value">${s.count}</span></div>`;
+            html += `<div class="stat-item"><span class="stat-label">missing</span><span class="stat-value">${s.missing} (${s.missingPct}%)</span></div>`;
+            html += `<div class="stat-item"><span class="stat-label">unique</span><span class="stat-value">${s.unique}</span></div>`;
+
+            if (s.type === 'numeric') {
+                html += `<div class="stat-item"><span class="stat-label">mean</span><span class="stat-value">${s.mean}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">median</span><span class="stat-value">${s.median}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">min / max</span><span class="stat-value">${s.min} / ${s.max}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">Q1 / Q3</span><span class="stat-value">${s.q1} / ${s.q3}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">std dev</span><span class="stat-value">${s.stdDev}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">skew / kurt</span><span class="stat-value">${s.skew ?? '—'} / ${s.kurt ?? '—'}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">outliers</span><span class="stat-value">${s.outliers??0} (${s.outlierPct??0}%)</span></div>`;
+            } else if (s.type === 'categorical' && s.topValues) {
+                s.topValues.forEach((t,i) => {
+                    html += `<div class="stat-item"><span class="stat-label">top ${i+1}</span><span class="stat-value">${escapeHtml(t.value)} (${t.count}, ${t.pct}%)</span></div>`;
+                });
+            } else if (s.type === 'date') {
+                html += `<div class="stat-item"><span class="stat-label">min date</span><span class="stat-value">${s.minDate}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">max date</span><span class="stat-value">${s.maxDate}</span></div>`;
+                html += `<div class="stat-item"><span class="stat-label">range (days)</span><span class="stat-value">${s.rangeDays}</span></div>`;
+            }
+            html += `</div><div class="chart-container" id="chart-${safeId}"></div></div>`;
+        });
+        document.getElementById('columnGrid').innerHTML = html;
+
+        // Destroy old charts
+        chartInstances.forEach(ch => ch.destroy());
+        chartInstances = [];
+
+        // Create charts with palette
+        unionHeaders.forEach((col, colIdx) => {
+            const s = columnStats[col];
+            const safeId = col.replace(/[^a-zA-Z0-9]/g, '_');
+            const container = document.getElementById(`chart-${safeId}`);
+            if (!container) return;
+            const canvas = document.createElement('canvas');
+            container.appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            let chart = null;
+            if (s.type === 'numeric' && s.numericValues?.length) {
+                const bins = 10;
+                const min = Math.min(...s.numericValues), max = Math.max(...s.numericValues);
+                if (max === min) { container.remove(); return; }
+                const binWidth = (max - min) / bins;
+                const counts = new Array(bins).fill(0);
+                s.numericValues.forEach(v => {
+                    let idx = Math.floor((v - min) / binWidth);
+                    if (idx === bins) idx = bins-1;
+                    if (idx >= 0) counts[idx]++;
+                });
+                const labels = [];
+                for (let i=0; i<bins; i++) labels.push(`${(min+i*binWidth).toFixed(1)}–${(min+(i+1)*binWidth).toFixed(1)}`);
+                const color = SOFT_PALETTE[colIdx % SOFT_PALETTE.length];
+                chart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: 'freq', data: counts, backgroundColor: color }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            } else if (s.type === 'categorical' && s.categories?.length) {
+                const top8 = s.categories.slice(0,8);
+                const cnt8 = s.counts.slice(0,8);
+                chart = new Chart(ctx, { type: 'bar', data: { labels: top8.map(l => l.length>12? l.substr(0,10)+'…':l), datasets: [{ label: 'count', data: cnt8, backgroundColor: SOFT_PALETTE.slice(0, cnt8.length) }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+            } else { container.remove(); return; }
+            chartInstances.push(chart);
+        });
+    }
+
+    function renderCorrelation() {
+        if (numericCols.length < 2) {
+            document.getElementById('correlationSection').classList.add('hidden');
+            return;
+        }
+        document.getElementById('correlationSection').classList.remove('hidden');
+        const cols = numericCols;
+        const n = cols.length;
+        const matrix = [];
+        for (let i=0; i<n; i++) {
+            const row = [];
+            for (let j=0; j<n; j++) {
+                if (i===j) { row.push(1.0); continue; }
+                const col1 = cols[i], col2 = cols[j];
+                const vals1 = filteredData.map(r => parseFloat(r[col1])).filter(v => !isNaN(v));
+                const vals2 = filteredData.map(r => parseFloat(r[col2])).filter(v => !isNaN(v));
+                if (vals1.length<2 || vals2.length<2) { row.push(0); continue; }
+                const len = Math.min(vals1.length, vals2.length);
+                const mean1 = vals1.reduce((a,b)=>a+b,0)/vals1.length;
+                const mean2 = vals2.reduce((a,b)=>a+b,0)/vals2.length;
+                let num=0, d1=0, d2=0;
+                for (let k=0; k<len; k++) {
+                    const diff1 = vals1[k]-mean1, diff2 = vals2[k]-mean2;
+                    num += diff1*diff2;
+                    d1 += diff1*diff1;
+                    d2 += diff2*diff2;
+                }
+                const denom = Math.sqrt(d1*d2);
+                row.push(denom===0 ? 0 : num/denom);
+            }
+            matrix.push(row);
+        }
+        let html = '<table><thead><tr><th></th>';
+        cols.forEach(c => html += `<th>${escapeHtml(c)}</th>`);
+        html += '</tr></thead><tbody>';
+        matrix.forEach((row, i) => {
+            html += `<tr><th style="font-weight:700;">${escapeHtml(cols[i])}</th>`;
+            row.forEach(v => {
+                let color = '#3b82f6';
+                if (v > 0.7) color = '#059669'; else if (v > 0.4) color = '#f97316'; else if (v < -0.4) color = '#b45309'; else if (v < -0.7) color = '#b91c1c';
+                const bg = `rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, 0.2)`;
+                html += `<td style="background:${bg};">${v.toFixed(2)}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('correlationTable').innerHTML = html;
+
+        // Top correlations
+        let pairs = [];
+        for (let i=0; i<n; i++) for (let j=i+1; j<n; j++) pairs.push({ pair: `${cols[i]} & ${cols[j]}`, val: matrix[i][j] });
+        pairs.sort((a,b) => Math.abs(b.val) - Math.abs(a.val));
+        const top5 = pairs.slice(0,5);
+        let topHtml = '<div style="font-weight:600; margin-bottom:10px;"><i class="fas fa-arrow-up"></i> Top correlations</div>';
+        top5.forEach(p => topHtml += `<div class="stat-item"><span>${escapeHtml(p.pair)}</span><span>${p.val.toFixed(3)}</span></div>`);
+        document.getElementById('topCorrelations').innerHTML = topHtml;
+    }
+
+    function renderSample() {
+        const sample = filteredData.slice(0, 20);
+        if (!sample.length) { document.getElementById('sampleTable').innerHTML = '<div>No data</div>'; return; }
+        let html = '<table><thead><tr>';
+        unionHeaders.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
+        html += '</tr></thead><tbody>';
+        sample.forEach(row => {
+            html += '<tr>';
+            unionHeaders.forEach(h => html += `<td>${escapeHtml(row[h] !== undefined ? row[h] : '')}</td>`);
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('sampleTable').innerHTML = html;
+    }
+
+    function escapeHtml(unsafe) {
+        return String(unsafe).replace(/[&<>"]/g, function(m) {
+            if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; if (m === '"') return '&quot;';
+            return m;
+        });
+    }
+
+    // ---------- Event listeners ----------
+    applyFilter.addEventListener('click', applyFilters);
+    clearAllFiltersBtn.addEventListener('click', clearAllFilters);
+
+    // Global search on Enter key
+    globalFilter.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') applyFilters();
+    });
+
+    // ---------- Export functions (unchanged, but included for completeness) ----------
+    document.getElementById('exportCsv').addEventListener('click', () => {
+        let csv = 'Column,Type,Count,Missing,Missing%,Unique,Mean,Median,Min,Max,StdDev,Skew,Kurt,Outliers,Outlier%,Q1,Q3,MinDate,MaxDate,RangeDays\n';
+        unionHeaders.forEach(h => {
+            const s = columnStats[h];
+            const row = [h, s.type, s.count, s.missing, s.missingPct, s.unique, s.mean||'', s.median||'', s.min||'', s.max||'', s.stdDev||'', s.skew||'', s.kurt||'', s.outliers||'', s.outlierPct||'', s.q1||'', s.q3||'', s.minDate||'', s.maxDate||'', s.rangeDays||''];
+            csv += row.map(c => `"${c}"`).join(',') + '\n';
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'analysis_summary.csv'; a.click();
+    });
+
+    document.getElementById('exportExcel').addEventListener('click', () => {
+        const wb = XLSX.utils.book_new();
+        const sumData = [['Column','Type','Count','Missing','Missing%','Unique','Mean','Median','Min','Max','StdDev','Skew','Kurt','Outliers','Outlier%','Q1','Q3','MinDate','MaxDate','RangeDays']];
+        unionHeaders.forEach(h => {
+            const s = columnStats[h];
+            sumData.push([h, s.type, s.count, s.missing, s.missingPct, s.unique, s.mean||'', s.median||'', s.min||'', s.max||'', s.stdDev||'', s.skew||'', s.kurt||'', s.outliers||'', s.outlierPct||'', s.q1||'', s.q3||'', s.minDate||'', s.maxDate||'', s.rangeDays||'']);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sumData), 'Summary');
+        if (numericCols.length >= 2) {
+            const corrData = [[''].concat(numericCols)];
+            for (let i=0; i<numericCols.length; i++) {
+                const row = [numericCols[i]];
+                for (let j=0; j<numericCols.length; j++) {
+                    if (i===j) { row.push(1); continue; }
+                    const col1 = numericCols[i], col2 = numericCols[j];
+                    const vals1 = filteredData.map(r=>parseFloat(r[col1])).filter(v=>!isNaN(v));
+                    const vals2 = filteredData.map(r=>parseFloat(r[col2])).filter(v=>!isNaN(v));
+                    if (vals1.length<2 || vals2.length<2) { row.push(0); continue; }
+                    const len = Math.min(vals1.length, vals2.length);
+                    const m1 = vals1.reduce((a,b)=>a+b,0)/vals1.length;
+                    const m2 = vals2.reduce((a,b)=>a+b,0)/vals2.length;
+                    let num=0,d1=0,d2=0;
+                    for (let k=0; k<len; k++) {
+                        const df1 = vals1[k]-m1, df2 = vals2[k]-m2;
+                        num += df1*df2; d1 += df1*df1; d2 += df2*df2;
+                    }
+                    const den = Math.sqrt(d1*d2);
+                    row.push(den===0?0:num/den);
+                }
+                corrData.push(row);
+            }
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(corrData), 'Correlation');
+        }
+        Object.keys(sheetsRawData).forEach(sheetName => {
+            const rows = sheetsRawData[sheetName];
+            if (rows && rows.length) {
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), sheetName);
+            }
+        });
+        XLSX.writeFile(wb, 'analysis_report.xlsx');
+    });
+
+    document.getElementById('exportPdf').addEventListener('click', async () => {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        let y = 40;
+        let pageNumber = 1;
+
+        const addPageNumber = () => {
+            pdf.setFontSize(10);
+            pdf.setTextColor(150);
+            pdf.text(`Page ${pageNumber}`, pageWidth - 60, pdf.internal.pageSize.getHeight() - 20);
+        };
+
+        const checkNewPage = (neededSpace) => {
+            if (y + neededSpace > pdf.internal.pageSize.getHeight() - 40) {
+                addPageNumber();
+                pdf.addPage();
+                pageNumber++;
+                y = 40;
+                pdf.setFillColor(240, 240, 240);
+                pdf.rect(0, 0, pageWidth, 30, 'F');
+                pdf.setFontSize(10);
+                pdf.setTextColor(100);
+                pdf.text('Data Analysis Report', 40, 20);
+                pdf.text(new Date().toLocaleDateString(), pageWidth - 120, 20);
+                pdf.setTextColor(0,0,0);
+                y = 50;
+            }
+        };
+
+        // Cover Page
+        pdf.setFillColor(37, 99, 235);
+        pdf.rect(0, 0, pageWidth, 120, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(42);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Data Analysis Report', 40, 70);
+        pdf.setFontSize(16);
+        pdf.text('Comprehensive Insights for Decision Making', 40, 95);
+        pdf.setTextColor(0, 0, 0);
+        y = 140;
+
+        pdf.setFillColor(250, 250, 250);
+        pdf.roundedRect(40, y, pageWidth-80, 90, 5, 5, 'F');
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Report Information', 55, y+20);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`File: ${fileInfo.innerText.replace(/[^\x20-\x7E]/g,'') || 'Google Sheets'}`, 55, y+40);
+        pdf.text(`Generated: ${new Date().toLocaleString()}`, 55, y+55);
+        pdf.text(`Filtered rows: ${filteredData.length} (of ${allData.length} total)`, 55, y+70);
+        y += 110;
+
+        const totalRows = filteredData.length;
+        const totalCols = unionHeaders.length;
+        let missingCells = 0;
+        unionHeaders.forEach(h => missingCells += columnStats[h].missing);
+        const completeness = totalRows * totalCols ? ((totalRows*totalCols - missingCells)/(totalRows*totalCols)*100) : 0;
+        const qualityScore = (completeness * 0.8).toFixed(1);
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Data Quality Score', 40, y);
+        y += 10;
+        pdf.setFontSize(36);
+        pdf.setTextColor(37, 99, 235);
+        pdf.text(`${qualityScore}%`, 40, y+30);
+        pdf.setDrawColor(200,200,200);
+        pdf.setFillColor(220,220,220);
+        pdf.rect(40, y+40, 300, 15, 'F');
+        pdf.setFillColor(37, 99, 235);
+        pdf.rect(40, y+40, 300 * (qualityScore/100), 15, 'F');
+        pdf.setTextColor(0,0,0);
+        y += 70;
+
+        // 1. Executive KPIs
+        checkNewPage(100);
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(37, 99, 235);
+        pdf.text('1. Key Performance Indicators', 40, y);
+        y += 20;
+        pdf.setTextColor(0,0,0);
+        const kpiData = [
+            ['Rows (filled)', filteredData.length],
+            ['Columns', unionHeaders.length],
+            ['Numeric', numericCols.length],
+            ['Categorical', categoricalCols.length],
+            ['Date', dateCols.length],
+            ['Completeness', completeness.toFixed(1) + '%']
+        ];
+        pdf.autoTable({
+            startY: y,
+            head: [['Metric', 'Value']],
+            body: kpiData,
+            theme: 'striped',
+            headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [245,245,245] },
+            margin: { left: 40, right: 40 }
+        });
+        y = pdf.lastAutoTable.finalY + 30;
+
+        // 2. Key Findings
+        checkNewPage(150);
+        pdf.setFontSize(18);
+        pdf.setTextColor(37, 99, 235);
+        pdf.text('2. Key Findings', 40, y);
+        y += 20;
+        pdf.setTextColor(0,0,0);
+        pdf.setFontSize(12);
+        let findings = [];
+        categoricalCols.slice(0,3).forEach(col => {
+            const s = columnStats[col];
+            if (s.topValues && s.topValues.length) {
+                findings.push(`• ${col}: most common "${s.topValues[0].value}" (${s.topValues[0].pct}%)`);
+            }
+        });
+        if (numericCols.length >= 2) {
+            let pairs = [];
+            for (let i=0; i<numericCols.length; i++) {
+                for (let j=i+1; j<numericCols.length; j++) {
+                    const col1 = numericCols[i], col2 = numericCols[j];
+                    const vals1 = filteredData.map(r => parseFloat(r[col1])).filter(v => !isNaN(v));
+                    const vals2 = filteredData.map(r => parseFloat(r[col2])).filter(v => !isNaN(v));
+                    if (vals1.length<2 || vals2.length<2) continue;
+                    const len = Math.min(vals1.length, vals2.length);
+                    const mean1 = vals1.reduce((a,b)=>a+b,0)/vals1.length;
+                    const mean2 = vals2.reduce((a,b)=>a+b,0)/vals2.length;
+                    let num=0, d1=0, d2=0;
+                    for (let k=0; k<len; k++) {
+                        const diff1 = vals1[k]-mean1, diff2 = vals2[k]-mean2;
+                        num += diff1*diff2;
+                        d1 += diff1*diff1;
+                        d2 += diff2*diff2;
+                    }
+                    const denom = Math.sqrt(d1*d2);
+                    const corr = denom===0 ? 0 : num/denom;
+                    pairs.push({ pair: `${col1} & ${col2}`, val: corr });
+                }
+            }
+            pairs.sort((a,b) => Math.abs(b.val) - Math.abs(a.val));
+            if (pairs.length) {
+                findings.push(`• Strongest correlation: ${pairs[0].pair} (${pairs[0].val.toFixed(2)})`);
+            }
+        }
+        numericCols.forEach(col => {
+            const s = columnStats[col];
+            if (s.outliers && s.outliers > 0) {
+                findings.push(`• ${col} has ${s.outliers} outliers (${s.outlierPct}%)`);
+            }
+        });
+        if (findings.length) {
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            findings.slice(0,6).forEach(line => {
+                pdf.text(line, 40, y);
+                y += 18;
+            });
+        } else {
+            pdf.text('No significant findings.', 40, y);
+            y += 20;
+        }
+        y += 10;
+
+        // 3. Data Quality (Missingness)
+        checkNewPage(150);
+        pdf.setFontSize(18);
+        pdf.setTextColor(37, 99, 235);
+        pdf.text('3. Data Quality Overview', 40, y);
+        y += 20;
+        pdf.setTextColor(0,0,0);
+        const missingRows = unionHeaders.slice(0,15).map(h => {
+            const s = columnStats[h];
+            return [h, s.missing, s.missingPct + '%'];
+        });
+        pdf.autoTable({
+            startY: y,
+            head: [['Column', 'Missing Count', 'Missing %']],
+            body: missingRows,
+            theme: 'striped',
+            headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [245,245,245] },
+            margin: { left: 40, right: 40 }
+        });
+        y = pdf.lastAutoTable.finalY + 30;
+
+        // 4. Numeric Column Statistics
+        if (numericCols.length) {
+            checkNewPage(200);
+            pdf.setFontSize(18);
+            pdf.setTextColor(37, 99, 235);
+            pdf.text('4. Numeric Column Statistics', 40, y);
+            y += 20;
+            pdf.setTextColor(0,0,0);
+            const numRows = numericCols.slice(0,12).map(col => {
+                const s = columnStats[col];
+                const skewDesc = s.skew ? (Math.abs(s.skew) < 0.5 ? 'symmetric' : (s.skew > 0 ? 'right-skewed' : 'left-skewed')) : '-';
+                return [col, s.mean, s.median, s.min, s.max, s.stdDev, skewDesc, s.outlierPct+'%'];
+            });
+            pdf.autoTable({
+                startY: y,
+                head: [['Column', 'Mean', 'Median', 'Min', 'Max', 'StdDev', 'Shape', 'Outliers %']],
+                body: numRows,
+                theme: 'striped',
+                headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245,245,245] },
+                margin: { left: 40, right: 40 }
+            });
+            y = pdf.lastAutoTable.finalY + 30;
+        }
+
+        // 5. Categorical Column Highlights
+        if (categoricalCols.length) {
+            checkNewPage(200);
+            pdf.setFontSize(18);
+            pdf.setTextColor(37, 99, 235);
+            pdf.text('5. Categorical Column Highlights', 40, y);
+            y += 20;
+            pdf.setTextColor(0,0,0);
+            const catRows = categoricalCols.slice(0,10).map(col => {
+                const s = columnStats[col];
+                const top = s.topValues && s.topValues.length ? 
+                    `${s.topValues[0].value} (${s.topValues[0].pct}%)` : '-';
+                const second = s.topValues && s.topValues.length > 1 ? 
+                    `${s.topValues[1].value} (${s.topValues[1].pct}%)` : '-';
+                return [col, s.unique, top, second];
+            });
+            pdf.autoTable({
+                startY: y,
+                head: [['Column', 'Unique', 'Most Frequent', '2nd Most Frequent']],
+                body: catRows,
+                theme: 'striped',
+                headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245,245,245] },
+                margin: { left: 40, right: 40 }
+            });
+            y = pdf.lastAutoTable.finalY + 30;
+        }
+
+        // 6. Correlation Matrix
+        if (numericCols.length >= 2) {
+            checkNewPage(250);
+            pdf.setFontSize(18);
+            pdf.setTextColor(37, 99, 235);
+            pdf.text('6. Correlation Matrix (Top 8 Numeric Columns)', 40, y);
+            y += 20;
+            pdf.setTextColor(0,0,0);
+
+            const corrCols = numericCols.slice(0,8);
+            const n = corrCols.length;
+            const matrix = [];
+            for (let i=0; i<n; i++) {
+                const row = [];
+                for (let j=0; j<n; j++) {
+                    if (i===j) { row.push(1.0); continue; }
+                    const col1 = corrCols[i], col2 = corrCols[j];
+                    const vals1 = filteredData.map(r => parseFloat(r[col1])).filter(v => !isNaN(v));
+                    const vals2 = filteredData.map(r => parseFloat(r[col2])).filter(v => !isNaN(v));
+                    if (vals1.length<2 || vals2.length<2) { row.push(0); continue; }
+                    const len = Math.min(vals1.length, vals2.length);
+                    const mean1 = vals1.reduce((a,b)=>a+b,0)/vals1.length;
+                    const mean2 = vals2.reduce((a,b)=>a+b,0)/vals2.length;
+                    let num=0, d1=0, d2=0;
+                    for (let k=0; k<len; k++) {
+                        const diff1 = vals1[k]-mean1, diff2 = vals2[k]-mean2;
+                        num += diff1*diff2;
+                        d1 += diff1*diff1;
+                        d2 += diff2*diff2;
+                    }
+                    const denom = Math.sqrt(d1*d2);
+                    row.push(denom===0 ? 0 : num/denom);
+                }
+                matrix.push(row);
+            }
+
+            const head = [''] .concat(corrCols.map(c => c.length>10 ? c.substr(0,8)+'…' : c));
+            const body = matrix.map((row, i) => [corrCols[i].length>10 ? corrCols[i].substr(0,8)+'…' : corrCols[i], ...row.map(v => v.toFixed(2))]);
+            pdf.autoTable({
+                startY: y,
+                head: [head],
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245,245,245] },
+                margin: { left: 40, right: 40 }
+            });
+            y = pdf.lastAutoTable.finalY + 30;
+        }
+
+        // 7. Outlier Summary
+        const outlierCols = numericCols.filter(col => columnStats[col].outliers && columnStats[col].outliers > 0);
+        if (outlierCols.length) {
+            checkNewPage(150);
+            pdf.setFontSize(18);
+            pdf.setTextColor(37, 99, 235);
+            pdf.text('7. Outlier Summary', 40, y);
+            y += 20;
+            pdf.setTextColor(0,0,0);
+            const outRows = outlierCols.slice(0,15).map(col => {
+                const s = columnStats[col];
+                return [col, s.outliers, s.outlierPct + '%'];
+            });
+            pdf.autoTable({
+                startY: y,
+                head: [['Column', 'Outlier Count', 'Outlier %']],
+                body: outRows,
+                theme: 'striped',
+                headStyles: { fillColor: [37,99,235], textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245,245,245] },
+                margin: { left: 40, right: 40 }
+            });
+            y = pdf.lastAutoTable.finalY + 30;
+        }
+
+        addPageNumber();
+        pdf.save('analysis_report.pdf');
+    });
+
+    loadGsheetBtn.addEventListener('click', loadGoogleSheet);
+})();
+</script>
+</body>
+</html>
